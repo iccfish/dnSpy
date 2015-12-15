@@ -103,7 +103,20 @@ namespace dnSpy.Files {
 			this.name = name;
 			this.lockObj = new object();
 			this.files = new ObservableCollection<DnSpyFile>();
+			this.CollectionChanged += DnSpyFileList_CollectionChanged;
 			this.assemblyResolver = new AssemblyResolver(this);
+		}
+
+		void DnSpyFileList_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
+			switch (e.Action) {
+			case NotifyCollectionChangedAction.Remove:
+				foreach (var file in e.OldItems.OfType<DnSpyFile>()) {
+					var mod = file.ModuleDef as ModuleDefMD;
+					if (mod != null)
+						mod.MetaData.PEImage.UnsafeDisableMemoryMappedIO();
+				}
+				break;
+			}
 		}
 
 		public DnSpyFile[] GetDnSpyFiles() {
